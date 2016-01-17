@@ -17,13 +17,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.util.CharArraySet;
-
 import com.diffbot.wikistatsextractor.dumpparser.DumpParser;
 import com.diffbot.wikistatsextractor.util.Util;
+import org.dbpedia.spotlight.db.model.StringTokenizer;
+import org.dbpedia.spotlight.db.model.TextTokenizer;
+import org.dbpedia.spotlight.model.Text;
+import org.dbpedia.spotlight.model.Token;
+import org.dbpedia.spotlight.model.TokenType;
+import org.dbpedia.spotlight.model.TokenType$;
+import scala.collection.Iterator;
 
 /**
  * extract for each dbpedia entry, the list of tokens that you can find around
@@ -58,11 +60,8 @@ public class ExtractContextualToken {
 			paragraphHash++;
 			return paragraphHash;
 		}
-		
-		
-		
-		
 
+		
 		/* associate for each resource a list of paragraphs in which they appear */
 		ConcurrentHashMap<String, List<Integer>> paragraphe_per_resource;
 		/* contains all the existing Uris */
@@ -70,16 +69,11 @@ public class ExtractContextualToken {
 		/* contains the redirections */
 		HashMap<String, String> redirections;
 
-		protected Analyzer analyzer;
+		protected TextTokenizer spotlightTokenizer;
 
-		public ECTWorker(CharArraySet stopwords, String analyzer_name, ConcurrentHashMap<String, List<Integer>> paragraphe_per_resource,
+		public ECTWorker(TextTokenizer spotlightTokenizer, ConcurrentHashMap<String, List<Integer>> paragraphe_per_resource,
 				Set<String> existing_uris, HashMap<String, String> redirections) {
-			String analyzer_full_name = "org.apache.lucene.analysis." + analyzer_name;
-			try {
-				analyzer = (Analyzer) Class.forName(analyzer_full_name).getConstructor(CharArraySet.class).newInstance(stopwords);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			this.spotlightTokenizer = spotlightTokenizer;
 			this.paragraphe_per_resource = paragraphe_per_resource;
 			this.existing_uris = existing_uris;
 			this.redirections = redirections;
@@ -97,11 +91,11 @@ public class ExtractContextualToken {
 
 			if (paragraphs != null) {
 
-				
+
 				for (String text_paragraph : paragraphs) {
-					
+
 					StringBuilder sb = new StringBuilder();
-					
+
 					// a paragraphe that is more than 5000 chars? Bullshit.
 					if (text_paragraph.length()>MAX_LENGTH_PARAGRAPH)
 						continue;
@@ -145,7 +139,7 @@ public class ExtractContextualToken {
 							}
 						}
 					}
-					
+
 					/** all right, last check, does the uri exist. If not, we remove it from the list */
 					for (int i=surface_forms.size()-1; i>=0; i--){
 						Util.PairUriSF pusf=surface_forms.get(i);
@@ -154,12 +148,12 @@ public class ExtractContextualToken {
 						if (!existing_uris.contains(escaped_uri))
 							surface_forms.remove(i);
 					}
-					
+
 					if (surface_forms.size()==0) {
 						continue;
 					}
 
-					
+
 
 					/** get the Hashcode of the paragraph */
 					int hash = ECTWorker.getNewHash();
@@ -171,21 +165,17 @@ public class ExtractContextualToken {
 					 */
 					String clean_paragraph_text = Util.cleanSurfaceForms(text_paragraph);
 
+					Iterator<Token> tokenIterator = this.spotlightTokenizer.tokenize(new Text(clean_paragraph_text)).iterator();
+
 					/** tokenize here */
-					try {
-						TokenStream stream = analyzer.tokenStream("paragraph", clean_paragraph_text);
-						stream.reset();
-						while (stream.incrementToken()) {
-							String token = stream.getAttribute(CharTermAttribute.class).toString();
-							sb.append(',');
-							sb.append(',');
-							sb.append(token);
-						}
-						sb.append('\n');
-						stream.close();
-					} catch (IOException e) {
-						e.printStackTrace();
+					while (tokenIterator.hasNext()) {
+						Token token = tokenIterator.next();
+						if (token.tokenType().isStopWord())
+						sb.append(',');
+						sb.append(',');
+						sb.append(token.tokenType().tokenType());
 					}
+
 					writeInOutput(sb.toString());
 
 					/** add the surface forms to the collection */
@@ -392,30 +382,13 @@ public class ExtractContextualToken {
 	 * output that is wikipedia uri,{(token,count),(token,count)...}
 	 * 
 	 * @param path_to_dump
-	 * @param analyzer_name
-	 * @param path_to_stopwords
 	 * @param path_to_output
 	 */
-	public static void extractContextualToken(String path_to_dump, String tmp_folder, String path_to_stopwords, String path_to_output,
-			String path_to_uri_count, String path_to_redirections) {
+	public static void extractContextualToken(String path_to_dump, String tmp_folder, String path_to_output,
+			String path_to_uri_count, String path_to_redirections, TextTokenizer spotlightTokenizer) {
 		String path_to_tmp_paragraphs = tmp_folder+"tmp_paragraphes";
 		String path_to_tmp_ref = tmp_folder+"tmp_referencess";
 		/*************** FIRST STEP ************/
-
-		// prepare the list of stopwords
-		CharArraySet stopwords = new CharArraySet(0, false);
-		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(path_to_stopwords)), "UTF8"), 16 * 1024);
-			String line = br.readLine();
-			while (line != null) {
-				stopwords.add(line);
-				line = br.readLine();
-			}
-			br.close();
-		} catch (IOException ioe) {
-			ioe.printStackTrace();
-		}
-		;
 
 		// import the Set of existing Uri, and the redirection page. This will
 		// be used to
@@ -455,7 +428,7 @@ public class ExtractContextualToken {
 		DumpParser dp = new DumpParser();
 		dp.setAnOutput(path_to_tmp_paragraphs);
 		for (int i = 0; i < 6; i++) {
-			dp.addWorker(new ECTWorker(stopwords, ANAYZER_NAME, storage_references, existing_Uri, redirections));
+			dp.addWorker(new ECTWorker(spotlightTokenizer, storage_references, existing_Uri, redirections));
 		}
 
 		// launch the extraction
@@ -516,11 +489,6 @@ public class ExtractContextualToken {
 		dp.extract(path_to_tmp_ref);
 		System.out.println("last step " + (System.currentTimeMillis() - start));
 
-		
-
 	}
 
-	public static void main(String[] args) {
-
-	}
 }
