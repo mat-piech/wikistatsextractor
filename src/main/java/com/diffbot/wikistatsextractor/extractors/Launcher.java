@@ -1,18 +1,9 @@
 package com.diffbot.wikistatsextractor.extractors;
 
 import org.apache.commons.cli.*;
-import org.dbpedia.spotlight.db.model.TextTokenizer;
-import org.dbpedia.spotlight.db.model.TextTokenizer$class;
-import org.dbpedia.spotlight.db.stem.SnowballStemmer;
-import org.dbpedia.spotlight.db.tokenize.LanguageIndependentTokenizer;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Locale;
-import java.util.Properties;
 
 public class Launcher {
 	
