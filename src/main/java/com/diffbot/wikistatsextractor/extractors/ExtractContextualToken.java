@@ -395,13 +395,12 @@ public class ExtractContextualToken {
 		// redirect the uri we find in paragraphs
 		Set<String> existing_Uri = new HashSet<String>();
 		HashMap<String, String> redirections = new HashMap<String, String>();
-		String prefix = "http://dbpedia.org/resource/";
 		try {
 			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(path_to_uri_count)), "UTF8"), 16 * 1024);
 			String line = br.readLine();
 			while (line != null) {
 				String[] split = line.split("\t");
-				String uri = split[0].substring(prefix.length());
+				String uri = split[0].replaceFirst("http://.*dbpedia.org/resource/", "");
 				existing_Uri.add(uri);
 				line = br.readLine();
 			}

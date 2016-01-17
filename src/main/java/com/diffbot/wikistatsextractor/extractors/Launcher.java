@@ -42,7 +42,7 @@ public class Launcher {
 		
 		/** set the parameters */
 		ExtractSFAndRedirections.LANGUAGE=language;
-		
+
 		/** extract all the surface forms, URI and redirections in the dump */
 		ExtractSFAndRedirections.extractAllSurfaceFormsAndRedirection(dump_file, 
 				output_folder+"pairCounts",
@@ -55,8 +55,8 @@ public class Launcher {
 		/** extract the ngrams: compute the number of time a surface form is a link compared to the number of time it 
 		 *  is just a word  */
 		ExtractAllNGrams.extractAllNGrams(dump_file,
-				tmp_folder+"tmp_surface_form_counts_"+language, 
-				output_folder+"sfAndTotalCounts_"+language);
+				tmp_folder+"tmp_surface_form_counts",
+				output_folder+"sfAndTotalCounts");
 		
 		/** The longest (and most incomprehensible) step. 
 		 *  For each resource, extract  the surrounding token */
