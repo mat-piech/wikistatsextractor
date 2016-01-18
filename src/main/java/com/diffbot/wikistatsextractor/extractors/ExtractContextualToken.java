@@ -400,7 +400,7 @@ public class ExtractContextualToken {
 			String line = br.readLine();
 			while (line != null) {
 				String[] split = line.split("\t");
-				String uri = split[0].replaceFirst("http://.*dbpedia.org/resource/", "");
+				String uri = split[0].split("/", 5)[4];
 				existing_Uri.add(uri);
 				line = br.readLine();
 			}
