@@ -21,6 +21,7 @@ import com.diffbot.wikistatsextractor.dumpparser.DumpParser;
 import com.diffbot.wikistatsextractor.util.Util;
 import org.dbpedia.spotlight.db.model.StringTokenizer;
 import org.dbpedia.spotlight.db.model.TextTokenizer;
+import org.dbpedia.spotlight.db.tokenize.TextTokenizerFactory;
 import org.dbpedia.spotlight.model.Text;
 import org.dbpedia.spotlight.model.Token;
 import org.dbpedia.spotlight.model.TokenType;
@@ -69,9 +70,9 @@ public class ExtractContextualToken {
 		/* contains the redirections */
 		HashMap<String, String> redirections;
 
-		protected TextTokenizer spotlightTokenizer;
+		protected StringTokenizer spotlightTokenizer;
 
-		public ECTWorker(TextTokenizer spotlightTokenizer, ConcurrentHashMap<String, List<Integer>> paragraphe_per_resource,
+		public ECTWorker(StringTokenizer spotlightTokenizer, ConcurrentHashMap<String, List<Integer>> paragraphe_per_resource,
 				Set<String> existing_uris, HashMap<String, String> redirections) {
 			this.spotlightTokenizer = spotlightTokenizer;
 			this.paragraphe_per_resource = paragraphe_per_resource;
@@ -165,15 +166,13 @@ public class ExtractContextualToken {
 					 */
 					String clean_paragraph_text = Util.cleanSurfaceForms(text_paragraph);
 
-					Iterator<Token> tokenIterator = this.spotlightTokenizer.tokenize(new Text(clean_paragraph_text)).iterator();
+					Iterator<String> tokenIterator = this.spotlightTokenizer.tokenize(clean_paragraph_text).iterator();
 
 					/** tokenize here */
 					while (tokenIterator.hasNext()) {
-						Token token = tokenIterator.next();
-						if (token.tokenType().isStopWord())
 						sb.append(',');
 						sb.append(',');
-						sb.append(token.tokenType().tokenType());
+						sb.append(tokenIterator.next());
 					}
 
 					writeInOutput(sb.toString());
@@ -385,7 +384,7 @@ public class ExtractContextualToken {
 	 * @param path_to_output
 	 */
 	public static void extractContextualToken(String path_to_dump, String tmp_folder, String path_to_output,
-			String path_to_uri_count, String path_to_redirections, TextTokenizer spotlightTokenizer) {
+			String path_to_uri_count, String path_to_redirections, TextTokenizerFactory spotlightTokenizerFactory) {
 		String path_to_tmp_paragraphs = tmp_folder+"tmp_paragraphes";
 		String path_to_tmp_ref = tmp_folder+"tmp_referencess";
 		/*************** FIRST STEP ************/
@@ -427,7 +426,7 @@ public class ExtractContextualToken {
 		DumpParser dp = new DumpParser();
 		dp.setAnOutput(path_to_tmp_paragraphs);
 		for (int i = 0; i < 6; i++) {
-			dp.addWorker(new ECTWorker(spotlightTokenizer, storage_references, existing_Uri, redirections));
+			dp.addWorker(new ECTWorker(spotlightTokenizerFactory.createTokenizer().getStringTokenizer(), storage_references, existing_Uri, redirections));
 		}
 
 		// launch the extraction

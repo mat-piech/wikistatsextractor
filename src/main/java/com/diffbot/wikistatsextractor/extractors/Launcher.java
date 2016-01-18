@@ -1,6 +1,7 @@
 package com.diffbot.wikistatsextractor.extractors;
 
 import org.apache.commons.cli.*;
+import org.dbpedia.spotlight.db.tokenize.TextTokenizerFactory;
 
 import java.util.List;
 import java.util.Locale;
@@ -58,7 +59,7 @@ public class Launcher {
 				output_folder + "tokenCounts",
 				output_folder + "uriCounts",
 				tmp_folder + "tmp_redirections",
-				org.dbpedia.spotlight.db.tokenize.TextTokenizer.fromParameters(new Locale(locale), stemmer, path_to_stopwords, "", null)
+				new TextTokenizerFactory(new Locale(locale), stemmer, path_to_stopwords, "", null)
 		);
 		
 		
