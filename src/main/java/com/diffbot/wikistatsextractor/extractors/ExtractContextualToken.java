@@ -170,10 +170,13 @@ public class ExtractContextualToken {
 
 					/** tokenize here */
 					while (tokenIterator.hasNext()) {
+						String token = tokenIterator.next();
+						if (token.length() <= 2 || token.contains("\n")) continue;
 						sb.append(',');
 						sb.append(',');
-						sb.append(tokenIterator.next());
+						sb.append(token);
 					}
+					sb.append('\n');
 
 					writeInOutput(sb.toString());
 
@@ -425,7 +428,7 @@ public class ExtractContextualToken {
 		ConcurrentHashMap<String, List<Integer>> storage_references = new ConcurrentHashMap<String, List<Integer>>(5000000, 0.5f, 6);
 		DumpParser dp = new DumpParser();
 		dp.setAnOutput(path_to_tmp_paragraphs);
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < 5; i++) {
 			dp.addWorker(new ECTWorker(spotlightTokenizerFactory.createTokenizer().getStringTokenizer(), storage_references, existing_Uri, redirections));
 		}
 

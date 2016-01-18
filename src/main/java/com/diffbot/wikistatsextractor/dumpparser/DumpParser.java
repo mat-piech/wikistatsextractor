@@ -105,11 +105,11 @@ public class DumpParser {
 				if (element_in_OQ > 20000) {
 					// the output queue seems jammed, let's wait a bit.
 					try {
-						Thread.sleep(1);
+						Thread.sleep(10);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-					element_written_in_output--;
+					//element_written_in_output--;
 				}
 			}
 			outputQueue.add(s);
