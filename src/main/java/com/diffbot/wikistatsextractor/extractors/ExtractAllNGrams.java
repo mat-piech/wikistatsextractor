@@ -27,7 +27,7 @@ import com.diffbot.wikistatsextractor.util.Util;
  */
 public class ExtractAllNGrams {
 	/** max nb token that a surface form can have */
-	public static int MAX_NB_TOKEN = 4;
+	public static int MAX_NB_TOKEN = 6;
 	/** local default language */
 	public static String LOCALE="en_US";
 	/** local language */

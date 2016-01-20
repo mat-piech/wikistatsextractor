@@ -92,6 +92,35 @@ public class ExtractContextualToken {
 
 			if (paragraphs != null) {
 
+				HashMap<Util.PairUriSF, Integer> linksInArticle = new HashMap<>();
+				for (String paragraph : paragraphs) {
+					List<Util.PairUriSF> pairsUriSF = Util.getAllSurfaceFormsInString(paragraph, MAX_LENGTH_SF, MIN_LENGTH_SF, MAX_NB_TOKEN_SF, LANGUAGE);
+					for (Util.PairUriSF pusf : pairsUriSF) {
+						Integer count = linksInArticle.get(pusf);
+						if (count == null)
+							linksInArticle.put(pusf, 1);
+						else
+							linksInArticle.put(pusf, 1 + count);
+					}
+				}
+
+				/**
+				 * Second run: duplicates per article
+				 */
+
+				HashMap<String, Util.PairUriSF> bestLinkForSF = new HashMap<>();
+				for (Util.PairUriSF uriSF : linksInArticle.keySet()) {
+					String sf = uriSF.surface_form;
+					if (bestLinkForSF.containsKey(sf)) {
+						if (linksInArticle.get(uriSF) >= linksInArticle.get(bestLinkForSF.get(sf))) {
+							//If this is URI occurred more often with the SF, we use this one as the main link
+							bestLinkForSF.put(sf, uriSF);
+						}
+					} else {
+						bestLinkForSF.put(sf, uriSF);
+					}
+				}
+
 
 				for (String text_paragraph : paragraphs) {
 
@@ -102,14 +131,32 @@ public class ExtractContextualToken {
 						continue;
 
 					/** look in the paragraph for any links */
-					List<Util.PairUriSF> surface_forms = Util.getSurfaceFormsInString(text_paragraph, MAX_LENGTH_SF,
+					List<Util.PairUriSF> real_surface_forms = Util.getSurfaceFormsInString(text_paragraph, MAX_LENGTH_SF,
 							MIN_LENGTH_SF, MAX_NB_TOKEN_SF, LANGUAGE);
+
+					List<String> knownSurfaceFormsInString = Util.getKnownSurfaceFormsInParagraph(text_paragraph, bestLinkForSF.keySet(), MAX_NB_TOKEN_SF, LANGUAGE);
+					List<Util.PairUriSF> surface_forms = new ArrayList<>();
+					HashSet<Util.PairUriSF> seenPairs = new HashSet<>();
+
+					for (String sf : knownSurfaceFormsInString) {
+						Util.PairUriSF pairUriSF = bestLinkForSF.get(sf);
+						seenPairs.add(pairUriSF);
+						surface_forms.add(pairUriSF);
+					}
+
+					if (real_surface_forms != null) {
+						for (Util.PairUriSF pairUriSF : real_surface_forms) {
+							if (!seenPairs.contains(pairUriSF)) {
+								surface_forms.add(pairUriSF);
+							}
+						}
+					}
 
 					/**
 					 * if we haven't found any surface form, this paragraph is
 					 * useless and we don't anaylze it
 					 */
-					if (surface_forms == null) {
+					if (!surface_forms.isEmpty()) {
 						continue;
 					}
 

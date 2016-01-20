@@ -5,13 +5,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.diffbot.wikistatsextractor.dumpparser.DumpParser;
+import com.diffbot.wikistatsextractor.util.Tokenizer;
 import com.diffbot.wikistatsextractor.util.Triplet;
 import com.diffbot.wikistatsextractor.util.Util;
 import com.diffbot.wikistatsextractor.util.Util.PairUriSF;
@@ -27,7 +25,7 @@ public class ExtractSFAndRedirections {
 	public static int MAX_LENGTH_SF = 80;
 	public static int MIN_LENGTH_SF = 2;
 	public static int NB_WORKERS=6;
-	public static int MAX_NB_TOKEN_SF = 4;
+	public static int MAX_NB_TOKEN_SF = 6;
 	public static int MIN_OCCURENCE_COUPLE = 2;
 	public static String LANGUAGE = "en";
 
@@ -54,6 +52,9 @@ public class ExtractSFAndRedirections {
 			List<String> paragraphs = Util.getCleanTextFromPage(page, false, false, false,true);
 
 			if (paragraphs != null) {
+
+				HashMap<Util.PairUriSF, Integer> linksInArticle = new HashMap<>();
+
 				/**
 				 * obtain couples Uri - Surface pairs in each paragraph, and
 				 * store it to a HashMap
@@ -61,12 +62,57 @@ public class ExtractSFAndRedirections {
 				for (String paragraph : paragraphs) {
 					List<Util.PairUriSF> pairsUriSF = Util.getAllSurfaceFormsInString(paragraph, MAX_LENGTH_SF, MIN_LENGTH_SF, MAX_NB_TOKEN_SF, LANGUAGE);
 					for (Util.PairUriSF pusf : pairsUriSF) {
-						Integer count = surface_form_index.get(pusf);
+						Integer count = linksInArticle.get(pusf);
 						if (count == null)
-							surface_form_index.put(pusf, 1);
+							linksInArticle.put(pusf, 1);
 						else
-							surface_form_index.put(pusf, 1 + count);
+							linksInArticle.put(pusf, 1 + count);
 					}
+				}
+
+				/**
+				 * Second run: duplicates per article
+				 */
+
+				HashMap<String, PairUriSF> bestLinkForSF = new HashMap<>();
+				for (PairUriSF uriSF : linksInArticle.keySet()) {
+					String sf = uriSF.surface_form;
+					if (bestLinkForSF.containsKey(sf)) {
+						if (linksInArticle.get(uriSF) >= linksInArticle.get(bestLinkForSF.get(sf))) {
+							//If this is URI occurred more often with the SF, we use this one as the main link
+							bestLinkForSF.put(sf, uriSF);
+						}
+					} else {
+						bestLinkForSF.put(sf, uriSF);
+					}
+				}
+
+				//Get all unlinked article links that occur after the first occurrence
+				List<String> knownSurfaceFormsInString = Util.getKnownSurfaceFormsInParagraphs(paragraphs, bestLinkForSF.keySet(), MAX_NB_TOKEN_SF, LANGUAGE);
+
+				//Reset the counts of the pairs that are seen both as normal links _and_ as SFs
+				for (String sf : knownSurfaceFormsInString) {
+					if (bestLinkForSF.containsKey(sf)) {
+						PairUriSF pairUriSF = bestLinkForSF.get(sf);
+						linksInArticle.put(pairUriSF, 0); //Reset the count of spotted SFs to 0 so we don't count them twice
+					}
+				}
+
+				//Update the counts for the pairs that occur as link and SF
+				for (String sf : knownSurfaceFormsInString) {
+					if (bestLinkForSF.containsKey(sf)) {
+						PairUriSF pairUriSF = bestLinkForSF.get(sf);
+						linksInArticle.put(pairUriSF, linksInArticle.get(pairUriSF) + 1);
+					}
+				}
+
+				//Update the global counts with the counts from this article:
+				for (Map.Entry<PairUriSF, Integer> entry : linksInArticle.entrySet()) {
+					Integer count = surface_form_index.get(entry.getKey());
+					if (count == null)
+						surface_form_index.put(entry.getKey(), entry.getValue());
+					else
+						surface_form_index.put(entry.getKey(), entry.getValue() + count);
 				}
 			}
 

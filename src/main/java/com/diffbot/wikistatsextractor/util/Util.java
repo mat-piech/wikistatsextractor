@@ -3,11 +3,9 @@
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
-/** some Utils methods */
+ /** some Utils methods */
 public class Util {
 
 	/** xml patterns that will be unescaped. Have to be the longest first */
@@ -564,6 +562,40 @@ public class Util {
 
 		}
 		return output;
+	}
+
+	 public static List<String> getKnownSurfaceFormsInParagraph(String paragraph, Set<String> allowedSFs, int MAX_NB_TOKEN_SF, String LANGUAGE) {
+		 List<String> knownSurfaceForms = new ArrayList<>();
+
+		 ArrayList<Integer> delimiters = Tokenizer.getDelimiters2(paragraph, LANGUAGE);
+		 for (int i = 0; i < delimiters.size(); i += 2) {
+			 for (int j = 0; j < MAX_NB_TOKEN_SF; j++) {
+				 if (i < delimiters.size() - j * 2 - 1) {
+					 String substr = paragraph.substring(delimiters.get(i), delimiters.get(i + 1 + 2 * j));
+					 if (allowedSFs.contains(substr)) {
+						 knownSurfaceForms.add(substr);
+					 }
+
+					 // special case of the dot (Apple Inc.), if the next char is a dot, we also check it
+					 if (delimiters.get(i + 1 + 2 * j)<paragraph.length() && paragraph.charAt(delimiters.get(i + 1 + 2 * j))=='.'){
+						 substr = paragraph.substring(delimiters.get(i), delimiters.get(i + 1 + 2 * j)+1);
+						 if (allowedSFs.contains(substr)) {
+							 knownSurfaceForms.add(substr);
+						 }
+					 }
+				 }
+			 }
+		 }
+
+		 return knownSurfaceForms;
+	 }
+
+	public static List<String> getKnownSurfaceFormsInParagraphs(List<String> paragraphs, Set<String> allowedSFs, int MAX_NB_TOKEN_SF, String LANGUAGE) {
+		List<String> knownSurfaceForms = new ArrayList<>();
+		for (String paragraph : paragraphs) {
+			knownSurfaceForms.addAll(getKnownSurfaceFormsInParagraph(paragraph, allowedSFs, MAX_NB_TOKEN_SF, LANGUAGE));
+		}
+		return knownSurfaceForms;
 	}
 
 	public static String cleanSurfaceForms(String s) {
