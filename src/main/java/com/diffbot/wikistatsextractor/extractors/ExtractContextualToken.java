@@ -43,7 +43,7 @@ public class ExtractContextualToken {
 	public static int MAX_LENGTH_PARAGRAPH=5000;
 	public static int MAX_LENGTH_SF=80;
 	public static int MIN_LENGTH_SF=2;
-	public static int MAX_NB_TOKEN_SF=4;
+	public static int MAX_NB_TOKEN_SF=6;
 	public static String LANGUAGE="en";
 	public static String ANAYZER_NAME="en.EnglishAnalyzer";
 
