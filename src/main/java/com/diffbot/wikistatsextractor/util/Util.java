@@ -566,8 +566,9 @@ public class Util {
 
 	 public static List<String> getKnownSurfaceFormsInParagraph(String paragraph, Set<String> allowedSFs, int MAX_NB_TOKEN_SF, String LANGUAGE) {
 		 List<String> knownSurfaceForms = new ArrayList<>();
+		 String clean_paragraph_text = Util.cleanSurfaceForms(paragraph);
 
-		 ArrayList<Integer> delimiters = Tokenizer.getDelimiters2(paragraph, LANGUAGE);
+		 ArrayList<Integer> delimiters = Tokenizer.getDelimiters2(clean_paragraph_text, LANGUAGE);
 		 for (int i = 0; i < delimiters.size(); i += 2) {
 			 for (int j = 0; j < MAX_NB_TOKEN_SF; j++) {
 				 if (i < delimiters.size() - j * 2 - 1) {
