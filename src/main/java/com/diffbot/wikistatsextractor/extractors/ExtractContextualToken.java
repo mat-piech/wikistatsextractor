@@ -8,13 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.diffbot.wikistatsextractor.dumpparser.DumpParser;
@@ -45,7 +39,6 @@ public class ExtractContextualToken {
 	public static int MIN_LENGTH_SF=2;
 	public static int MAX_NB_TOKEN_SF=6;
 	public static String LANGUAGE="en";
-	public static String ANAYZER_NAME="en.EnglishAnalyzer";
 
 	/** first worker. Given a page, it extract token from each paragraph.
 	 *  Associate each paragraph with a unique id. 
@@ -94,8 +87,8 @@ public class ExtractContextualToken {
 
 				HashMap<Util.PairUriSF, Integer> linksInArticle = new HashMap<>();
 				for (String paragraph : paragraphs) {
-					List<Util.PairUriSF> pairsUriSF = Util.getAllSurfaceFormsInString(paragraph, MAX_LENGTH_SF, MIN_LENGTH_SF, MAX_NB_TOKEN_SF, LANGUAGE);
-					for (Util.PairUriSF pusf : pairsUriSF) {
+					List<Util.PairUriSF> realLinks = Util.getAllSurfaceFormsInString(paragraph, MAX_LENGTH_SF, MIN_LENGTH_SF, MAX_NB_TOKEN_SF, LANGUAGE);
+					for (Util.PairUriSF pusf : realLinks) {
 						Integer count = linksInArticle.get(pusf);
 						if (count == null)
 							linksInArticle.put(pusf, 1);
@@ -109,15 +102,15 @@ public class ExtractContextualToken {
 				 */
 
 				HashMap<String, Util.PairUriSF> bestLinkForSF = new HashMap<>();
-				for (Util.PairUriSF uriSF : linksInArticle.keySet()) {
-					String sf = uriSF.surface_form;
+				for (Map.Entry<Util.PairUriSF, Integer> uriSFAndCount : linksInArticle.entrySet()) {
+					String sf = uriSFAndCount.getKey().surface_form;
 					if (bestLinkForSF.containsKey(sf)) {
-						if (linksInArticle.get(uriSF) >= linksInArticle.get(bestLinkForSF.get(sf))) {
+						if (uriSFAndCount.getValue() >= linksInArticle.get(bestLinkForSF.get(sf))) {
 							//If this is URI occurred more often with the SF, we use this one as the main link
-							bestLinkForSF.put(sf, uriSF);
+							bestLinkForSF.put(sf, uriSFAndCount.getKey());
 						}
 					} else {
-						bestLinkForSF.put(sf, uriSF);
+						bestLinkForSF.put(sf, uriSFAndCount.getKey());
 					}
 				}
 
@@ -131,8 +124,7 @@ public class ExtractContextualToken {
 						continue;
 
 					/** look in the paragraph for any links */
-					List<Util.PairUriSF> real_surface_forms = Util.getSurfaceFormsInString(text_paragraph, MAX_LENGTH_SF,
-							MIN_LENGTH_SF, MAX_NB_TOKEN_SF, LANGUAGE);
+					List<Util.PairUriSF> real_surface_forms = Util.getSurfaceFormsInString(text_paragraph, MAX_LENGTH_SF, MIN_LENGTH_SF, MAX_NB_TOKEN_SF, LANGUAGE);
 
 					List<String> knownSurfaceFormsInString = Util.getKnownSurfaceFormsInParagraph(text_paragraph, bestLinkForSF.keySet(), MAX_NB_TOKEN_SF, LANGUAGE);
 					List<Util.PairUriSF> surface_forms = new ArrayList<>();
@@ -156,7 +148,7 @@ public class ExtractContextualToken {
 					 * if we haven't found any surface form, this paragraph is
 					 * useless and we don't anaylze it
 					 */
-					if (!surface_forms.isEmpty()) {
+					if (surface_forms.isEmpty()) {
 						continue;
 					}
 
