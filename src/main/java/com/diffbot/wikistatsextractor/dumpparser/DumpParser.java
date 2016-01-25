@@ -105,11 +105,11 @@ public class DumpParser {
 				if (element_in_OQ > 20000) {
 					// the output queue seems jammed, let's wait a bit.
 					try {
-						Thread.sleep(10);
+						Thread.sleep(1);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-					//element_written_in_output--;
+					element_written_in_output--;
 				}
 			}
 			outputQueue.add(s);
@@ -226,8 +226,8 @@ public class DumpParser {
 	 */
 	public void extract(final String[] path_to_dumps, final long max_nb_pages_to_extract) {
 		long start = System.currentTimeMillis();
-
-		ExecutorService es = Executors.newFixedThreadPool(getNbProcessor());
+		int nb_threads=2+workers.size();
+		ExecutorService es = Executors.newFixedThreadPool(nb_threads);
 
 		if (workers.size() == 0) {
 			System.out.println("No workers have been specified ");
