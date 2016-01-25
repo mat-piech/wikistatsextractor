@@ -13,6 +13,9 @@ import com.diffbot.wikistatsextractor.util.Tokenizer;
 import com.diffbot.wikistatsextractor.util.Triplet;
 import com.diffbot.wikistatsextractor.util.Util;
 import com.diffbot.wikistatsextractor.util.Util.PairUriSF;
+import org.dbpedia.spotlight.db.model.*;
+import org.dbpedia.spotlight.db.model.StringTokenizer;
+import org.dbpedia.spotlight.db.tokenize.TextTokenizerFactory;
 
 /**
  * Extract the Surface form as well as the uri they link to in the text.
@@ -35,11 +38,14 @@ public class ExtractSFAndRedirections {
 		// will receive the name of pages that actually exist
 		ConcurrentHashMap<String, Integer> page_titles;
 
+		protected StringTokenizer spotlightTokenizer;
+
 		public RedirAndSFWorker(ConcurrentHashMap<Util.PairUriSF, Integer> surface_form_index, ConcurrentHashMap<String, String> redirection,
-				ConcurrentHashMap<String, Integer> page_titles) {
+				ConcurrentHashMap<String, Integer> page_titles, StringTokenizer spotlightTokenizer) {
 			this.surface_form_index = surface_form_index;
 			this.redirection = redirection;
 			this.page_titles = page_titles;
+			this.spotlightTokenizer = spotlightTokenizer;
 		}
 
 		@Override
@@ -88,7 +94,7 @@ public class ExtractSFAndRedirections {
 				}
 
 				//Get all unlinked article links that occur after the first occurrence
-				List<String> knownSurfaceFormsInString = Util.getKnownSurfaceFormsInParagraphs(paragraphs, bestLinkForSF.keySet(), MAX_NB_TOKEN_SF, LANGUAGE);
+				List<String> knownSurfaceFormsInString = Util.getKnownSurfaceFormsInParagraphs(paragraphs, bestLinkForSF.keySet(), MAX_NB_TOKEN_SF, spotlightTokenizer);
 
 				//Reset the counts of the pairs that are seen both as normal links _and_ as SFs
 				for (String sf : knownSurfaceFormsInString) {
@@ -141,7 +147,8 @@ public class ExtractSFAndRedirections {
 
 	/** extract all surface forms and all redirection that it can get */
 	public static void extractAllSurfaceFormsAndRedirection(final String path_to_wiki_articles, String path_to_output_surface_form,
-			String path_to_output_redirections, String path_to_ouput_uri_counts, String path_to_output_sf_counts) {
+			String path_to_output_redirections, String path_to_ouput_uri_counts, String path_to_output_sf_counts,
+			TextTokenizerFactory spotlightTokenizerFactory) {
 
 		/** container for the output */
 		ConcurrentHashMap<Util.PairUriSF, Integer> surface_form_index = new ConcurrentHashMap<Util.PairUriSF, Integer>(10000000, 0.5f, 8);
@@ -151,7 +158,7 @@ public class ExtractSFAndRedirections {
 		/** launch the dump Parsing */
 		DumpParser dp = new DumpParser();
 		for (int i = 0; i < NB_WORKERS; i++)
-			dp.addWorker(new RedirAndSFWorker(surface_form_index, redirection, page_titles));
+			dp.addWorker(new RedirAndSFWorker(surface_form_index, redirection, page_titles, spotlightTokenizerFactory.createTokenizer().getStringTokenizer()));
 		dp.extract(path_to_wiki_articles);
 
 		/** exploit the dump parsing (single threaded but should be fast */

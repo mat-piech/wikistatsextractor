@@ -126,7 +126,7 @@ public class ExtractContextualToken {
 					/** look in the paragraph for any links */
 					List<Util.PairUriSF> real_surface_forms = Util.getSurfaceFormsInString(text_paragraph, MAX_LENGTH_SF, MIN_LENGTH_SF, MAX_NB_TOKEN_SF, LANGUAGE);
 
-					List<String> knownSurfaceFormsInString = Util.getKnownSurfaceFormsInParagraph(text_paragraph, bestLinkForSF.keySet(), MAX_NB_TOKEN_SF, LANGUAGE);
+					List<String> knownSurfaceFormsInString = Util.getKnownSurfaceFormsInParagraph(text_paragraph, bestLinkForSF.keySet(), MAX_NB_TOKEN_SF, spotlightTokenizer);
 					List<Util.PairUriSF> surface_forms = new ArrayList<>();
 					HashSet<Util.PairUriSF> seenPairs = new HashSet<>();
 

@@ -1,5 +1,7 @@
  package com.diffbot.wikistatsextractor.util;
 
+import opennlp.tools.util.Span;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -564,25 +566,17 @@ public class Util {
 		return output;
 	}
 
-	 public static List<String> getKnownSurfaceFormsInParagraph(String paragraph, Set<String> allowedSFs, int MAX_NB_TOKEN_SF, String LANGUAGE) {
+	 public static List<String> getKnownSurfaceFormsInParagraph(String paragraph, Set<String> allowedSFs, int MAX_NB_TOKEN_SF, org.dbpedia.spotlight.db.model.StringTokenizer spotlightTokenizer) {
 		 List<String> knownSurfaceForms = new ArrayList<>();
 		 String clean_paragraph_text = Util.cleanSurfaceForms(paragraph);
 
-		 ArrayList<Integer> delimiters = Tokenizer.getDelimiters2(clean_paragraph_text, LANGUAGE);
-		 for (int i = 0; i < delimiters.size(); i += 2) {
-			 for (int j = 0; j < MAX_NB_TOKEN_SF; j++) {
-				 if (i < delimiters.size() - j * 2 - 1) {
-					 String substr = paragraph.substring(delimiters.get(i), delimiters.get(i + 1 + 2 * j));
+		 Span[] spans = spotlightTokenizer.tokenizePos(clean_paragraph_text);
+		 for (int i = 0; i < spans.length; i++) {
+			 for (int j = 0; j < MAX_NB_TOKEN_SF-1; j++) {
+				 if (i+j < spans.length) {
+					 String substr = paragraph.substring(spans[i].getStart(), spans[i + j].getEnd());
 					 if (allowedSFs.contains(substr)) {
 						 knownSurfaceForms.add(substr);
-					 }
-
-					 // special case of the dot (Apple Inc.), if the next char is a dot, we also check it
-					 if (delimiters.get(i + 1 + 2 * j)<paragraph.length() && paragraph.charAt(delimiters.get(i + 1 + 2 * j))=='.'){
-						 substr = paragraph.substring(delimiters.get(i), delimiters.get(i + 1 + 2 * j)+1);
-						 if (allowedSFs.contains(substr)) {
-							 knownSurfaceForms.add(substr);
-						 }
 					 }
 				 }
 			 }
@@ -591,10 +585,10 @@ public class Util {
 		 return knownSurfaceForms;
 	 }
 
-	public static List<String> getKnownSurfaceFormsInParagraphs(List<String> paragraphs, Set<String> allowedSFs, int MAX_NB_TOKEN_SF, String LANGUAGE) {
+	public static List<String> getKnownSurfaceFormsInParagraphs(List<String> paragraphs, Set<String> allowedSFs, int MAX_NB_TOKEN_SF, org.dbpedia.spotlight.db.model.StringTokenizer spotlightTokenizer) {
 		List<String> knownSurfaceForms = new ArrayList<>();
 		for (String paragraph : paragraphs) {
-			knownSurfaceForms.addAll(getKnownSurfaceFormsInParagraph(paragraph, allowedSFs, MAX_NB_TOKEN_SF, LANGUAGE));
+			knownSurfaceForms.addAll(getKnownSurfaceFormsInParagraph(paragraph, allowedSFs, MAX_NB_TOKEN_SF, spotlightTokenizer));
 		}
 		return knownSurfaceForms;
 	}

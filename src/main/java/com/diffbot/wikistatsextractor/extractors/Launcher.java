@@ -35,20 +35,22 @@ public class Launcher {
 		/** set the parameters */
 		ExtractSFAndRedirections.LANGUAGE=language;
 
+		TextTokenizerFactory tokenizerFactory = new TextTokenizerFactory(new Locale(locale), stemmer, path_to_stopwords, "", null);
+
 		/** extract all the surface forms, URI and redirections in the dump */
 		ExtractSFAndRedirections.extractAllSurfaceFormsAndRedirection(dump_file, 
 				output_folder+"pairCounts",
 				tmp_folder+"tmp_redirections",
 				output_folder+"uriCounts",
-				tmp_folder+"tmp_surface_form_counts");
-		
-		ExtractAllNGrams.LOCALE=locale;
-		ExtractAllNGrams.LANGUAGE=language;
+				tmp_folder+"tmp_surface_form_counts",
+				tokenizerFactory);
+
 		/** extract the ngrams: compute the number of time a surface form is a link compared to the number of time it 
 		 *  is just a word  */
 		ExtractAllNGrams.extractAllNGrams(dump_file,
 				tmp_folder+"tmp_surface_form_counts",
-				output_folder+"sfAndTotalCounts");
+				output_folder+"sfAndTotalCounts",
+				tokenizerFactory);
 		
 		/** The longest (and most incomprehensible) step. 
 		 *  For each resource, extract  the surrounding token */
@@ -59,8 +61,7 @@ public class Launcher {
 				output_folder + "tokenCounts",
 				output_folder + "uriCounts",
 				tmp_folder + "tmp_redirections",
-				new TextTokenizerFactory(new Locale(locale), stemmer, path_to_stopwords, "", null)
-		);
+				tokenizerFactory);
 		
 		
 		System.out.println("all done in "+((System.currentTimeMillis()-start)/1000)+" seconds");
