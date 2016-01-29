@@ -549,7 +549,7 @@ public class Util {
 						|| pusf.uri.charAt(0) == '-')
 					continue;
 				if (pusf.surface_form.charAt(0) == '&' || pusf.surface_form.charAt(0) == '\"' || pusf.surface_form.charAt(0) == '('
-						|| pusf.surface_form.charAt(0) == '\'' || pusf.surface_form.charAt(0) == '-')
+						|| pusf.surface_form.charAt(0) == '\'' || pusf.surface_form.charAt(0) == '-' || pusf.surface_form.charAt(0) == ' ')
 					continue;
 
 				/**
