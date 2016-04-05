@@ -574,7 +574,7 @@ public class Util {
 		 for (int i = 0; i < spans.length; i++) {
 			 for (int j = 0; j < MAX_NB_TOKEN_SF-1; j++) {
 				 if (i+j < spans.length) {
-					 String substr = paragraph.substring(spans[i].getStart(), spans[i + j].getEnd());
+					 String substr = clean_paragraph_text.substring(spans[i].getStart(), spans[i + j].getEnd());
 					 if (allowedSFs.contains(substr)) {
 						 knownSurfaceForms.add(substr);
 					 }
