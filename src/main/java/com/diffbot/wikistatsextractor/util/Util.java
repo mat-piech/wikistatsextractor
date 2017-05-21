@@ -6,6 +6,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
  /** some Utils methods */
 public class Util {
@@ -13,6 +15,8 @@ public class Util {
 	/** xml patterns that will be unescaped. Have to be the longest first */
 	private static String[] to_unescape = { "&amp;nbsp;", "&amp;mdash;", "&amp;ndash;", "&amp;", "&quot;", "&apos;", "&#039", "&mdash;", "&ndash", "&nbsp;" };
 	private static char[] unescaped = {         '\u0020',      '\u2014',      '\u2013',    '&',      '"',     '\'',    '\'',  '\u2014', '\u2013', '\u0020' };
+
+	 String patternStr = "[1-9]{3}";
 
 	/**
 	 * One of the main methods. The older getCleanText was a bit more efficient,
@@ -44,10 +48,16 @@ public class Util {
 		}
 
 		/** go to the index of the text */
-		int index_text = page.indexOf("<text xml:space=\"preserve\">");
+		String patternStr = "<text bytes=\"\\d+\" xml:space=\"preserve\">";
+		Pattern patternIdx = Pattern.compile(patternStr);
+		Matcher matcher = patternIdx.matcher(page);
+		int index_text = -1;
+		if (matcher.find()) {
+			index_text = matcher.end();
+		}
+
 		if (index_text == -1)
 			return null;
-		index_text += "<text xml:space=\"preserve\">".length();
 
 		/** locate the end */
 		int end_text = page.indexOf("</text>");

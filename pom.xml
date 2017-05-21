@@ -18,7 +18,7 @@
 		<dependency>
 			<groupId>org.dbpedia.spotlight</groupId>
 			<artifactId>core</artifactId>
-			<version>0.7</version>
+			<version>1.0</version>
 		</dependency>
 
 		<dependency>
@@ -92,6 +92,18 @@
 						</goals>
 					</execution>
 				</executions>
+				        <configuration>
+					  <filters>
+					    <filter>
+					      <artifact>*:*</artifact>
+					      <excludes>
+						<exclude>META-INF/*.SF</exclude>
+						<exclude>META-INF/*.DSA</exclude>
+						<exclude>META-INF/*.RSA</exclude>
+					      </excludes>
+					    </filter>
+					  </filters>
+					</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
